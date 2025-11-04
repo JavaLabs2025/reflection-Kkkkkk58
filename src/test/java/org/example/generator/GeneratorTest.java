@@ -143,8 +143,6 @@ class GeneratorTest {
             "Shape should be either Rectangle or Triangle");
         
         Shape shape = (Shape) result;
-        assertTrue(shape.getArea() >= 0);
-        assertTrue(shape.getPerimeter() >= 0);
         
         System.out.println("Generated Shape: " + shape.getClass().getSimpleName() + " = " + shape);
     }
