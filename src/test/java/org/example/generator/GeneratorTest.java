@@ -5,6 +5,7 @@ import java.util.Random;
 
 import org.example.classes.BinaryTreeNode;
 import org.example.classes.Cart;
+import org.example.classes.CartStorage;
 import org.example.classes.Example;
 import org.example.classes.Product;
 import org.example.classes.Rectangle;
@@ -92,8 +93,44 @@ class GeneratorTest {
             assertNotNull(item.getName());
         });
 
-        System.out.println("Generated Cart with " + cart.getItems().size() + " items:");
-        cart.getItems().forEach(p -> System.out.println("  - " + p));
+        System.out.println("Generated Cart: " + cart);
+    }
+
+    @Test
+    void generateCartStorage() {
+        Object result = generator.generateValueOfType(CartStorage.class);
+
+        assertNotNull(result);
+        assertInstanceOf(CartStorage.class, result);
+
+        CartStorage cartStorage = (CartStorage) result;
+        assertNotNull(cartStorage.getBuyerCarts(), "Buyer carts map should not be null");
+        assertTrue(
+                cartStorage.getBuyerCarts().size() <= MAX_COLLECTION_SIZE,
+                "CartStorage should have at most " + MAX_COLLECTION_SIZE + " buyers"
+        );
+
+        cartStorage.getBuyerCarts().forEach((buyer, carts) -> {
+            assertNotNull(buyer, "Buyer name (key) should not be null");
+            assertInstanceOf(String.class, buyer, "Key should be String");
+
+            assertNotNull(carts, "Cart list should not be null");
+            assertInstanceOf(List.class, carts, "Value should be List");
+            assertTrue(carts.size() <= MAX_COLLECTION_SIZE, "Cart list should be limited");
+            
+            carts.forEach(cart -> {
+                assertInstanceOf(Cart.class, cart, "Element should be Cart");
+                assertNotNull(cart.getItems(), "Cart items should not be null");
+                assertTrue(cart.getItems().size() <= MAX_COLLECTION_SIZE, "Cart items should be limited");
+                
+                cart.getItems().forEach(product -> {
+                    assertInstanceOf(Product.class, product);
+                    assertNotNull(product.getName());
+                });
+            });
+        });
+
+        System.out.println("Generated CartStorage: " + cartStorage);
     }
     
     @Test

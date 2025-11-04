@@ -5,13 +5,16 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.example.annotation.Generatable;
 
@@ -40,18 +43,15 @@ public class Generator {
     private Object generateValueOfTypeInternal(Class<?> clazz, Type genericType, int depth) throws Exception {
         var valueGenerator = findValueGeneratorForClass(clazz);
         if (valueGenerator != null) {
-            return valueGenerator.generate(clazz, genericType);
+            return valueGenerator.generate(clazz);
         }
 
         if (depth > MAX_RECURSION_DEPTH) {
             return null;
         }
 
-        if (List.class.isAssignableFrom(clazz)) {
-            return generateList(genericType, depth);
-        }
-        if (Set.class.isAssignableFrom(clazz)) {
-            return generateSet(genericType, depth);
+        if (Collection.class.isAssignableFrom(clazz)) {
+            return generateCollection(clazz, genericType, depth);
         }
         if (Map.class.isAssignableFrom(clazz)) {
             return generateMap(genericType, depth);
@@ -77,61 +77,64 @@ public class Generator {
                 .orElse(null);
     }
 
-    private List<?> generateList(Type genericType, int depth) throws Exception {
-        Class<?> elementType = getCollectionElementType(genericType);
-
-        int size = random.nextInt(MAX_COLLECTION_SIZE + 1);
-        List<Object> list = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            Object element = generateValueOfTypeInternal(elementType, null, depth);
-            list.add(element);
+    private Collection<?> generateCollection(Class<?> clazz, Type genericType, int depth) throws Exception {
+        if (List.class.isAssignableFrom(clazz)) {
+            return generateCollectionInternal(genericType, depth, ArrayList::new);
+        } else if (Set.class.isAssignableFrom(clazz)) {
+            return generateCollectionInternal(genericType, depth, HashSet::new);
+        } else {
+            return generateCollectionInternal(genericType, depth, ArrayDeque::new);
         }
-        return list;
     }
 
-    private Set<?> generateSet(Type genericType, int depth) throws Exception {
-        Class<?> elementType = getCollectionElementType(genericType);
-
-        int size = random.nextInt(MAX_COLLECTION_SIZE + 1);
-        Set<Object> set = new HashSet<>();
-        for (int i = 0; i < size; i++) {
-            Object element = generateValueOfTypeInternal(elementType, null, depth);
-            set.add(element);
-        }
-        return set;
-    }
-
-    private Class<?> getCollectionElementType(Type genericType) {
+    private Collection<?> generateCollectionInternal(
+            Type genericType,
+            int depth,
+            Supplier<Collection<Object>> collectionSupplier
+    ) throws Exception {
         Class<?> elementType = Object.class;
+        Type elementGenericType = null;
 
         if (genericType instanceof ParameterizedType paramType) {
             Type[] typeArgs = paramType.getActualTypeArguments();
             if (typeArgs.length > 0) {
-                elementType = getClassFromType(typeArgs[0]);
+                elementGenericType = typeArgs[0];
+                elementType = getClassFromType(elementGenericType);
             }
         }
-        return elementType;
+
+        int size = random.nextInt(MAX_COLLECTION_SIZE + 1);
+        var collection = collectionSupplier.get();
+        for (int i = 0; i < size; i++) {
+            Object element = generateValueOfTypeInternal(elementType, elementGenericType, depth);
+            collection.add(element);
+        }
+        return collection;
     }
 
     private Map<?, ?> generateMap(Type genericType, int depth) throws Exception {
         Class<?> keyType = Object.class;
+        Type keyGenericType = null;
         Class<?> valueType = Object.class;
+        Type valueGenericType = null;
 
         if (genericType instanceof ParameterizedType paramType) {
             Type[] typeArgs = paramType.getActualTypeArguments();
             if (typeArgs.length > 0) {
-                keyType = getClassFromType(typeArgs[0]);
+                keyGenericType = typeArgs[0];
+                keyType = getClassFromType(keyGenericType);
             }
             if (typeArgs.length > 1) {
-                valueType = getClassFromType(typeArgs[1]);
+                valueGenericType = typeArgs[1];
+                valueType = getClassFromType(valueGenericType);
             }
         }
 
         int size = random.nextInt(MAX_COLLECTION_SIZE + 1);
         Map<Object, Object> map = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            Object key = generateValueOfTypeInternal(keyType, null, depth);
-            Object value = generateValueOfTypeInternal(valueType, null, depth);
+            Object key = generateValueOfTypeInternal(keyType, keyGenericType, depth);
+            Object value = generateValueOfTypeInternal(valueType, valueGenericType, depth);
             map.put(key, value);
         }
         return map;
