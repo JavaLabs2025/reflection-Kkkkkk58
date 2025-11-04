@@ -50,6 +50,10 @@ public class GeneratableProcessor extends AbstractProcessor {
         return (element.getKind() == ElementKind.CLASS) ? (TypeElement) element : null;
     }
 
+    /**
+     * При процессинге аннотации {@link Generatable} "кэшируем" классы, которые её используют,
+     * для дальнейшего поиска при генерации производных классов, реализующих интерфейсы
+     */
     private void generateGeneratableRegistry(List<TypeElement> typeElements) {
         try {
             JavaFileObject file = processingEnv.getFiler()
