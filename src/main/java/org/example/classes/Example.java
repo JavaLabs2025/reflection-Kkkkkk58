@@ -1,5 +1,8 @@
 package org.example.classes;
 
+import org.example.annotation.Generatable;
+
+@Generatable
 public class Example {
     int i;
 
@@ -9,6 +12,8 @@ public class Example {
 
     @Override
     public String toString() {
-        return "Example(" + i + ")";
+        return "Example{" +
+                "i=" + i +
+                '}';
     }
 }
