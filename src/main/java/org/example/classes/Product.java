@@ -1,5 +1,8 @@
 package org.example.classes;
 
+import org.example.annotation.Generatable;
+
+@Generatable
 public class Product {
     private String name;
     private double price;
@@ -31,18 +34,10 @@ public class Product {
     }
 
     @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
     public String toString() {
-        return super.toString();
+        return "Product{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                '}';
     }
-
 }
